@@ -1,0 +1,19 @@
+{
+  "plugin": "dsh-software-company",
+  "pluginVersion": "0.1.0",
+  "bundleType": "pure-configuration",
+  "patch": "./cordis.patch.yml",
+  "targetHost": "DeepSeek Harness (DSH)",
+  "targetHostVersion": "0.2.2-rc.1",
+  "targetHostTag": "dsh-v0.2.2-rc.1",
+  "engines": {
+    "node": ">=24.9.0",
+    "dsh": ">=0.2.2-rc.1"
+  },
+  "staticVerification": {
+    "command": "node scripts/verify.mjs",
+    "description": "Zero-dependency static self-check of package.json, cordis.patch.yml, persona prefixes, agent prompts, the optional skill, and both READMEs."
+  },
+  "configDumpSelfCheck": "dsh --dump-config",
+  "runtimeVerification": "not executed (no DSH host in build environment)"
+}

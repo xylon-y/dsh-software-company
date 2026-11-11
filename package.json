@@ -1,0 +1,52 @@
+{
+  "name": "dsh-software-company",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Pure-configuration DSH bundle that adapts the Software Company expert team (1 lead + 4 members) into DeepSeek Harness agent presets.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xylon-y/dsh-software-company.git"
+  },
+  "homepage": "https://github.com/xylon-y/dsh-software-company",
+  "bugs": {
+    "url": "https://github.com/xylon-y/dsh-software-company/issues"
+  },
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "dsh",
+    "agent-preset",
+    "multi-agent",
+    "software-company",
+    "sop"
+  ],
+  "engines": {
+    "node": ">=24.9.0",
+    "dsh": ">=0.2.2-rc.1"
+  },
+  "files": [
+    "package.json",
+    "cordis.patch.yml",
+    "README.md",
+    "README.zh.md",
+    "LICENSE",
+    "compatibility.json",
+    "agents/software-team-lead.md",
+    "agents/software-product-manager.md",
+    "agents/software-architect.md",
+    "agents/software-engineer.md",
+    "agents/software-qa-engineer.md",
+    "skills/software-company-sop/SKILL.md",
+    "scripts/verify.mjs"
+  ],
+  "exports": {
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
