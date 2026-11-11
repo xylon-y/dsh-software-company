@@ -1,30 +1,32 @@
-# dsh-software-company - Software Development Team for DeepSeek Harness
+# dsh-software-company · DeepSeek Harness 软件开发团队插件
 
-A **pure-configuration bundle** that adapts the WorkBuddy `software-company` expert team (1 lead + 4 members) into installable **DeepSeek Harness (DSH) 0.2.2-rc.1** agent presets. After installation the host gains 5 Agent Presets: one delivery director (the lead) and four specialists; the lead orchestrates delivery through four named delegation tools following a fixed SOP.
+> 中文文档（即本文件，GitHub 首页默认展示）。English version: [README.en.md]
 
-This package has **zero JS entry points**: no runtime code, no `dependencies` / `peerDependencies`, no build scripts. All capabilities come from the `@deepseek-ai/dsh-*` packages already shipped with the host profile. Every persona prompt is inlined into its preset via `@deepseek-ai/dsh-persona` `prefix`, and is also provided as a readable copy under `agents/*.md` (static verification asserts they are byte-for-byte identical).
+把 WorkBuddy `software-company` 专家团（1 主理人 + 4 成员）适配为 **DeepSeek Harness（DSH）0.2.2-rc.1** 可安装的**纯配置 Bundle**。安装后宿主会多出 5 个 Agent Preset：1 个主理人 + 4 个成员，主理人通过 4 个具名委派工具按 SOP 编排交付。
 
-> Canonical roster (from the original `plugin.json`): 齐活林 / Qi (Delivery Director, lead), 许清楚 / Xu (Product Manager), 高见远 / Gao (Architect), 寇豆码 / Kou (Engineer), 严过关 / Yan (QA Engineer).
+本包**零 JS 入口**：不提供运行时代码、不声明任何 `dependencies` / `peerDependencies`、没有构建脚本；能力全部来自宿主自带的 `@deepseek-ai/dsh-*` 包。所有角色提示词以 `@deepseek-ai/dsh-persona` 的 `prefix` 内联进各自的 preset，并同时以 `agents/*.md` 提供可读副本（两者由静态自检保证逐字一致）。
+
+> 正式花名（以原 `plugin.json` 为准）：齐活林（Qi，交付总监 / 主理人）、许清楚（Xu，产品经理）、高见远（Gao，架构师）、寇豆码（Kou，工程师）、严过关（Yan，QA 工程师）。
 
 ---
 
-## Compatibility matrix
+## 兼容性矩阵
 
-| Item | Value |
-|------|-------|
-| Target host | DeepSeek Harness (DSH) |
-| Target host version | `0.2.2-rc.1` |
-| Official tag | `dsh-v0.2.2-rc.1` |
-| Node requirement | `>=24.9.0` (`engines.node`) |
-| Host gate | `engines.dsh: ">=0.2.2-rc.1"` |
-| Plugin version | `0.1.0` |
-| Bundle type | Pure configuration (patch layer: `./cordis.patch.yml`) |
-| Supported profile | `web` (desktop / headless profiles already ship `@deepseek-ai/dsh-*`) |
+| 项目 | 值 |
+|------|-----|
+| 目标宿主 | DeepSeek Harness（DSH） |
+| 目标宿主版本 | `0.2.2-rc.1` |
+| 官方 tag | `dsh-v0.2.2-rc.1` |
+| Node 要求 | `>=24.9.0`（`engines.node`） |
+| 宿主门控 | `engines.dsh: ">=0.2.2-rc.1"` |
+| 插件版本 | `0.1.0` |
+| Bundle 类型 | 纯配置（patch 层：`./cordis.patch.yml`） |
+| 适用 profile | `web`（桌面端 / headless 均自带 `@deepseek-ai/dsh-*` 包） |
 | License | MIT |
 
 ---
 
-## Installation
+## 安装
 
 ### CLI
 
@@ -32,120 +34,120 @@ This package has **zero JS entry points**: no runtime code, no `dependencies` / 
 dsh plugin --profile web add github:xylon-y/dsh-software-company
 ```
 
-This adds the repository to `dsh.profile.bundles` of the selected profile.
+该命令会把本仓库加入所选 profile 的 `dsh.profile.bundles`。
 
-### Desktop app
+### 桌面端
 
-Open **Plugins -> Add plugin** and paste the repository URL:
+打开 **Plugins → Add plugin**，粘贴仓库 URL：
 
 ```
 https://github.com/xylon-y/dsh-software-company
 ```
 
-### After installing
+### 安装后
 
-**Restart the profile** (or restart the desktop app) so the patch layer participates in config composition. Then run `dsh --dump-config` for a self-check (see below).
-
----
-
-## Usage
-
-When creating a new session, pick **"软件开发团队 · 交付总监（齐活林 Qi）"** (`software-company-lead`) in the **Agent Preset** selector, or set it as the default preset in settings. Then describe the request: the lead (齐活林 / Qi) first classifies the workflow (Fast mode / BugFix / Standard SOP / Partial workflow) and delegates accordingly.
-
-> Only the lead preset owns the four delegation tools. The four member presets carry only `@deepseek-ai/dsh-tool-subagent-control` (`send_message` / `interrupt_agent` / `list_agents`); they cannot spawn further subagents and cannot message each other. Subagent completion notices are delivered to the lead automatically - no polling, no sleep.
+**重启对应 profile**（或重启桌面端），让 patch 层参与配置组装。建议随后用 `dsh --dump-config` 做一次组合配置自检（见下文）。
 
 ---
 
-## 5 Agent Presets and 4 delegation tools
+## 使用
 
-| Role | Name | `config.id` | `order` | Lead delegation tool |
-|------|------|------------|---------|----------------------|
-| Lead / Delivery Director | 齐活林 (Qi) | `software-company-lead` | 10 | Owns all four tools below |
-| Product Manager | 许清楚 (Xu) | `software-company-product-manager` | 11 | `delegate_to_pm` |
-| Architect | 高见远 (Gao) | `software-company-architect` | 12 | `delegate_to_architect` |
-| Engineer | 寇豆码 (Kou) | `software-company-engineer` | 13 | `delegate_to_engineer` |
-| QA Engineer | 严过关 (Yan) | `software-company-qa-engineer` | 14 | `delegate_to_qa` |
+新建会话时，在 **Agent Preset** 下拉中选择 **「软件开发团队 · 交付总监（齐活林 Qi）」**（`software-company-lead`）；也可在设置里把它设为默认 preset。随后直接描述需求，主理人齐活林会先判定工作流类型（快速模式 / BugFix / 标准 SOP / 部分工作流），再分派给成员。
 
-`order` uses 10-14 to avoid the official `standard` preset (order 1). Each delegation tool is a distinct `@deepseek-ai/dsh-tool-subagent` instance with `provider: spawn`, `maxDepth: 1`, an explicit `agentPreset`, and a globally unique `toolName`. Instances live in the `delegation` `cordis:group` with `isolate: { workflowEngine: true }` preserved from the official standard preset.
+> 只有主理人 preset 持有 4 个委派工具。4 个成员 preset 只挂 `@deepseek-ai/dsh-tool-subagent-control`（提供 `send_message` / `interrupt_agent` / `list_agents`），不能再委派下级代理，也无法互相直连。子代理完成通知（completion notice）会自动回到主理人，无需轮询或 sleep。
 
 ---
 
-## Four workflows
+## 5 个 Agent Preset 与 4 个委派工具
 
-| Workflow | Trigger | Stage order |
-|----------|---------|-------------|
-| Fast mode | Single-page app / small game / CLI tool / <= 10 source files | Request -> `delegate_to_engineer` (all code in one turn) -> `delegate_to_qa` -> deliver |
-| BugFix | A clearly reported bug, not a new feature | Bug report -> `delegate_to_engineer` (locate + fix) -> `delegate_to_qa` (regression only) |
-| Standard SOP | Medium/large, multi-module, frontend + backend, > 10 source files | PRD -> system design + task decomposition -> coding + global consistency review -> tests + smart routing |
-| Partial workflow | Analysis only | Dispatch a single member: PRD only / architecture review / implementation only / tests only / market research |
+| 角色 | 花名 | `config.id` | `order` | 主理人委派工具 |
+|------|------|-------------|---------|----------------|
+| 主理人 / 交付总监 | 齐活林（Qi） | `software-company-lead` | 10 | 持有下列全部 4 个 |
+| 产品经理 | 许清楚（Xu） | `software-company-product-manager` | 11 | `delegate_to_pm` |
+| 架构师 | 高见远（Gao） | `software-company-architect` | 12 | `delegate_to_architect` |
+| 工程师 | 寇豆码（Kou） | `software-company-engineer` | 13 | `delegate_to_engineer` |
+| QA 工程师 | 严过关（Yan） | `software-company-qa-engineer` | 14 | `delegate_to_qa` |
 
-Quality gates: the Engineer runs an `IS_PASS` global consistency review (max 2 rounds); QA makes an `Engineer / QA / NoOne` smart-routing decision per round (max 2 test rounds). Other invariants: sequential flow, full prior context forwarded, feedback loops, language consistency, documentation, structured output, incremental-development support, member conclusions are authoritative while the lead only orchestrates. The final delivery summary must contain **TL;DR / Delivery overview / File list / Next-step suggestions**.
+`order` 使用 10-14，避开官方 `standard` preset 的 1。每个委派工具都是 `@deepseek-ai/dsh-tool-subagent` 的一个独立实例：`provider: spawn`、`maxDepth: 1`、显式 `agentPreset`，`toolName` 全局唯一。这些实例包在 `delegation` 的 `cordis:group` 里，并保留 `isolate: { workflowEngine: true }`。
 
 ---
 
-## Optional skill installation
+## 四种工作流
 
-The full SOP is already inlined into the lead's persona `prefix`, so it works out of the box. The bundled `skills/software-company-sop/SKILL.md` is an **optional project-level enhancement** cheat sheet (routing table, role/delegation mapping, workflow stages, quality gates, delivery spec, message-relay rules).
+| 工作流 | 判定条件 | 阶段顺序 |
+|--------|---------|---------|
+| ⚡ 快速模式 | 单页面应用 / 小游戏 / 工具脚本 / ≤ 10 个源文件 | 用户需求 → `delegate_to_engineer`（一次性写完全部代码）→ `delegate_to_qa` → 交付 |
+| 🔧 BugFix | 用户报告明确 Bug、非新功能 | Bug 报告 → `delegate_to_engineer`（定位 + 修复）→ `delegate_to_qa`（仅回归） |
+| 🏗️ 标准 SOP | 中大型 / 多模块 / 涉及前后端 / > 10 个源文件 | PRD → 系统设计 + 任务分解 → 编码 + 全局一致性审查 → 测试 + 智能路由 |
+| 📋 部分工作流 | 仅需分析 | 只分派单个成员：仅 PRD / 架构评审 / 代码实现 / 仅测试 / 市场调研 |
 
-The `skills/` directory **inside the plugin package is NOT auto-discovered**. `@deepseek-ai/dsh-skill-filesystem` scans `<project>/.dsh/skills`, `<project>/.agents/skills`, `customSkillDirs`, and the user directory, one level deep for `<name>/SKILL.md`. Copy it manually:
+质量关卡：工程师完成全部文件后做 `IS_PASS` 全局一致性审查（最多 2 轮）；QA 每轮做智能路由判定 `Engineer / QA / NoOne`，最多 2 轮测试。其余铁律：顺序流转、信息传递含前序完整上下文、反馈回路、语言一致性、文档化、结构化输出、增量开发支持、成员结论为准而主理人只做编排。最终交付总结必含 **TL;DR / 交付概览 / 文件清单 / 用户下一步建议**。
+
+---
+
+## 可选 Skill 安装
+
+主理人的完整 SOP 已内联在 persona `prefix` 中，**默认即可工作**。仓库自带的 `skills/software-company-sop/SKILL.md` 是可选的**项目级增强**速查卡（路由判定表、角色与委派映射、四种工作流阶段、质量关卡、交付规范、消息中转铁律）。
+
+插件包内的 `skills/` **不会**被 DSH 自动发现。`@deepseek-ai/dsh-skill-filesystem` 只扫描 `<project>/.dsh/skills`、`<project>/.agents/skills`、`customSkillDirs` 与用户目录，且只扫一层 `<name>/SKILL.md`。因此需要手动复制：
 
 ```
 mkdir -p <project>/.dsh/skills
 cp -r skills/software-company-sop <project>/.dsh/skills/
 ```
 
-The resulting path must be `<project>/.dsh/skills/software-company-sop/SKILL.md`; the model can then load it on demand via the `skill` tool. Do not try `!!js` tricks to guess the package path (fragile and possibly blocked by execution policy).
+复制后应存在 `<project>/.dsh/skills/software-company-sop/SKILL.md`，模型即可通过 `skill` 工具按需加载。不要用 `!!js` 之类手段去猜插件包路径（脆弱且可能被执行策略拦截）。
 
 ---
 
-## Verification
+## 验证
 
-Zero third-party dependencies, plain Node:
+零第三方依赖，Node 原生即可运行：
 
 ```
 node scripts/verify.mjs
 ```
 
-It prints one PASS/FAIL line per check plus a summary and exits with code 1 on any failure. Coverage: `package.json` fields and version gates, the `files` manifest, `cordis.patch.yml` structure (single `- insert:`, five `sc-` rows, unique row ids / `config.id`, valid `agentPreset` / `toolName`, no delegation instances in member presets), byte-for-byte `prefix` vs `agents/*.md` agreement, prompt interpolation safety, skill frontmatter and size, install commands in both READMEs, and more.
+会逐项输出 PASS/FAIL 并汇总；任一项失败则退出码为 1。覆盖：`package.json` 字段与版本门控、`files` 清单、`cordis.patch.yml` 结构（单个 `- insert:`、5 个 `sc-` 行、行 id / `config.id` 唯一、`agentPreset` / `toolName` 合法、成员无委派实例）、`prefix` 与 `agents/*.md` 逐字一致、prompt 插值安全、Skill frontmatter 与长度、两份 README 的安装命令等。
 
-### Composed-config self-check (recommended on a real host)
+### 组合配置自检（建议真机执行）
 
 ```
 dsh --dump-config
 ```
 
-Confirm: all five `software-company-*` presets appear in the composed config tree; each preset's `plugins[0]` is `@deepseek-ai/dsh-persona`; only the lead preset has the four `tool-subagent` instances; no host-owned top-level row id was overwritten. Because patch `config` is a **whole-value replacement** (not a deep merge), this bundle only inserts brand-new `sc-`-prefixed rows.
+核对：5 个 `software-company-*` preset 出现在组合后的配置树中；每个 preset 的 `plugins[0]` 是 `@deepseek-ai/dsh-persona`；只有主理人 preset 含 4 个 `tool-subagent` 实例；没有任何宿主已有的顶层行 id 被覆盖。因为 patch 层的 `config` 是**整段替换**而非深合并，本 bundle 只 `insert` 全新的 `sc-` 前缀行。
 
 ---
 
-## Known limitations (stated honestly)
+## 已知限制（如实标注）
 
-1. **No real-host composition test**: the build environment has no DSH runtime. This bundle is validated by static self-checks plus the official `dsh-v0.2.2-rc.1` tag contract only; please re-check `dsh --dump-config` and the real delegation chain on a host. `compatibility.json` records `runtimeVerification: "not executed (no DSH host in build environment)"`.
-2. **Pure-configuration bundle**: no custom runtime tools, UI, or JS entry points; all capabilities depend on the `@deepseek-ai/dsh-*` packages shipped by the host profile.
-3. **Token overhead**: the full SOP is injected as a persona `prefix` into the system prompt, so it is carried on every turn and increases per-turn token usage.
-4. **Message topology**: DSH `send_message` only supports direct parent/child communication, so members cannot message each other directly. This happens to satisfy the original SOP rule ("all cross-member information flows are relayed by the lead"), but it also prevents lateral member-to-member negotiation.
-5. **Do not overwrite the official `standard` preset**: this bundle only inserts new `sc-`-prefixed rows and never touches host top-level rows such as `agent-preset-registry`, `system-prompt`, `skill-filesystem`, `tool-skill`, `agent-loop`. Do not hand-edit it into a `replace`.
-6. **Tool subset fully matches the official standard**: shell tools are conditionally disabled per host platform - `@deepseek-ai/dsh-tool-bash` on win32 and `@deepseek-ai/dsh-tool-pwsh` on non-win32, exactly like the official standard preset (`disabled` is evaluated in the patch layer via a `!!js` expression). Other tool config also matches the official standard: `tool-fs` disables `applyPatch`, `tool-fs-search` disables `sampleOverCapGlobResults`, `tool-todo` enables `allowParallelInProgress`, `tool-web` enables `fetch` with `searchTimeoutMs: 60000`, and `compaction-tool-result-pruner` sets `thresholdChars: 8192` / `headChars: 4096` / `tailChars: 1024`.
-7. **Prompt variable interpolation**: DSH interpolates variables inside the persona `prefix`; unregistered variables break prompt assembly. All `prefix` blocks and `agents/*.md` bodies here are guaranteed free of the template-variable opener (two consecutive left curly braces) - do not introduce one when customizing.
-8. **Node gate**: `engines.node: ">=24.9.0"` is required by DSH 0.2.2-rc.1. `scripts/verify.mjs` itself uses only Node built-ins, but please run it in an environment that satisfies the gate.
+1. **未做真机组合验证**：构建环境没有 DSH 运行时，本包只通过静态自检 + 官方 `dsh-v0.2.2-rc.1` tag 契约取证；`dsh --dump-config` 与真实委派链路请在宿主上复核。`compatibility.json` 中 `runtimeVerification` 明确记为 `not executed (no DSH host in build environment)`。
+2. **纯配置 Bundle**：不提供自定义运行时工具、UI 或 JS 入口；所有能力依赖宿主 profile 自带的 `@deepseek-ai/dsh-*` 包。
+3. **token 开销**：完整 SOP 作为 persona `prefix` 注入系统提示，每轮对话都会携带，会增加每轮 token 消耗。
+4. **消息拓扑**：DSH 的 `send_message` 只支持直接父/子通信，成员之间不能互相直连 —— 这恰好满足原 SOP「所有跨成员信息流经主理人中转」的铁律，但也意味着无法做成员间横向协商。
+5. **不要覆盖官方 `standard` preset**：本 bundle 只 `insert` 全新的 `sc-` 前缀行，不改动 `agent-preset-registry` / `system-prompt` / `skill-filesystem` / `tool-skill` / `agent-loop` 等宿主顶层行；请勿手工把它改成 `replace`。
+6. **工具子集与官方 standard 完全对齐**：shell 工具按宿主平台条件禁用 —— `@deepseek-ai/dsh-tool-bash` 在 win32 禁用、`@deepseek-ai/dsh-tool-pwsh` 在非 win32 禁用，与官方 standard preset 一致（`disabled` 使用 `!!js` 表达式在 patch 层求值）。其余工具 config 亦对齐官方：`tool-fs` 关闭 `applyPatch`、`tool-fs-search` 关闭 `sampleOverCapGlobResults`、`tool-todo` 开启 `allowParallelInProgress`、`tool-web` 开启 `fetch` 并设 `searchTimeoutMs: 60000`、`compaction-tool-result-pruner` 设 `thresholdChars: 8192` / `headChars: 4096` / `tailChars: 1024`。
+7. **prompt 变量插值**：DSH 会对 persona `prefix` 做变量插值，未注册变量会导致 prompt 组装失败；本包所有 `prefix` 与 `agents/*.md` 正文均已确保不含模板变量起始符（两个连续的左花括号），自定义修改时请勿引入。
+8. **Node 门控**：`engines.node: ">=24.9.0"` 是 DSH 0.2.2-rc.1 的要求；`scripts/verify.mjs` 本身只用 Node 原生 API，但请在满足门控的环境运行。
 
 ---
 
-## Layout
+## 目录结构
 
 ```
 dsh-software-company/
-├── package.json                 # pure-config declaration + engines gates + dsh.bundle.patch
-├── cordis.patch.yml             # one - insert: containing 5 Agent Presets
-├── agents/                      # readable DSH persona sources (prefix injected verbatim)
+├── package.json                 # 纯配置 bundle 声明 + engines 门控 + dsh.bundle.patch
+├── cordis.patch.yml             # 单个 - insert: 内含 5 个 Agent Preset
+├── agents/                      # DSH 版角色提示词（可读源，prefix 由此逐字注入）
 │   ├── software-team-lead.md
 │   ├── software-product-manager.md
 │   ├── software-architect.md
 │   ├── software-engineer.md
 │   └── software-qa-engineer.md
-├── skills/software-company-sop/SKILL.md   # optional project-level enhancement
-├── scripts/verify.mjs          # zero-dependency static self-check
-├── README.zh.md / README.md
+├── skills/software-company-sop/SKILL.md   # 可选项目级增强
+├── scripts/verify.mjs          # 零依赖静态自检
+├── README.md（中文，默认首页）/ README.en.md（English）
 ├── compatibility.json
 ├── LICENSE
 └── .gitignore
@@ -153,4 +155,4 @@ dsh-software-company/
 
 ## License
 
-MIT (c) 2026 xylon-y
+MIT © 2026 xylon-y

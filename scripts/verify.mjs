@@ -434,7 +434,7 @@ record('g2 SKILL.md 全文 < 8192 字符', () => {
 // ---------------------------------------------------------------------------
 // (h) README install command + target version
 // ---------------------------------------------------------------------------
-for (const [id, rel] of [['h1', 'README.zh.md'], ['h2', 'README.md']]) {
+for (const [id, rel] of [['h1', 'README.md'], ['h2', 'README.en.md']]) {
   record(`${id} ${rel} 含安装命令与 0.2.2-rc.1`, () => {
     const text = read(rel);
     assert(text.includes('github:xylon-y/dsh-software-company'), `${rel} missing install command`);
