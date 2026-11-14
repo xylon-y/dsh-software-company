@@ -32,9 +32,9 @@ const LEGACY_NAMES = /\b(Alice|Bob|Alex|Edward)\b/g;
 const WORKBUDDY_MECHANISMS = ['TeamCreate', 'subagent_type', 'TaskCreate', 'Agent(name=', 'shutdown_request'];
 
 /**
- * Authoritative @deepseek-ai/dsh-* package names for DSH 0.2.2-rc.1.
+ * Authoritative @deepseek-ai/dsh-* package names for DSH 0.2.2-rc.3.
  *
- * SOURCE: packages/bundle/web-app/presets/standard.patch.yml @ tag dsh-v0.2.2-rc.1
+ * SOURCE: packages/bundle/web-app/presets/standard.patch.yml @ tag dsh-v0.2.2-rc.3
  * (the official DeepSeek Harness web-app standard preset).
  *
  * This is a hardcoded copy of the official package set. When the host adds,
@@ -49,7 +49,8 @@ const AUTHORITATIVE_PACKAGES = [
   'tool-skill', 'command-goal', 'tool-goal', 'plan-mode', 'compaction-basic',
   'command-compact', 'compaction-tool-result-pruner', 'tool-subagent-control',
   'tool-subagent', 'workflow-ptc', 'tool-workflow', 'tool-ask-user', 'tool-todo',
-  'tool-web', 'tool-present', 'plugin-manager/tools', 'plugin-market/tools',
+  'tool-web', 'tool-present', 'tool-office', 'plugin-manager/tools',
+  'plugin-market/tools',
 ];
 const ALLOWED_PLUGIN_NAMES = new Set([
   ...AUTHORITATIVE_PACKAGES.map((name) => `@deepseek-ai/dsh-${name}`),
@@ -192,7 +193,7 @@ record('a1 package.json 可解析且必填字段齐全', () => {
     assert(Object.prototype.hasOwnProperty.call(pkg, key), `missing field: ${key}`);
   }
   assert(pkg.name === 'dsh-software-company', `name mismatch: ${pkg.name}`);
-  assert(pkg.version === '0.1.0', `version mismatch: ${pkg.version}`);
+  assert(pkg.version === '0.2.0', `version mismatch: ${pkg.version}`);
   assert(pkg.type === 'module', 'type must be module');
   assert(pkg.license === 'MIT', 'license must be MIT');
   assert(String(pkg.repository.url || '').includes('xylon-y/dsh-software-company'), 'repository url mismatch');
@@ -208,10 +209,10 @@ record('a1 package.json 可解析且必填字段齐全', () => {
 
 record('a2 engines.dsh / engines.node 版本门控', () => {
   const pkg = JSON.parse(read('package.json'));
-  assert(typeof pkg.engines.dsh === 'string' && pkg.engines.dsh.includes('0.2.2-rc.1'), 'engines.dsh must contain 0.2.2-rc.1');
+  assert(typeof pkg.engines.dsh === 'string' && pkg.engines.dsh.includes('0.2.2-rc.3'), 'engines.dsh must contain 0.2.2-rc.3');
   assert(typeof pkg.engines.node === 'string' && pkg.engines.node.includes('24.9'), 'engines.node must require >= 24.9');
   assert(pkg.engines.node === '>=24.9.0', `engines.node exact value: ${pkg.engines.node}`);
-  assert(pkg.engines.dsh === '>=0.2.2-rc.1', `engines.dsh exact value: ${pkg.engines.dsh}`);
+  assert(pkg.engines.dsh === '>=0.2.2-rc.3', `engines.dsh exact value: ${pkg.engines.dsh}`);
   return `node=${pkg.engines.node} dsh=${pkg.engines.dsh}`;
 });
 
@@ -435,10 +436,10 @@ record('g2 SKILL.md 全文 < 8192 字符', () => {
 // (h) README install command + target version
 // ---------------------------------------------------------------------------
 for (const [id, rel] of [['h1', 'README.md'], ['h2', 'README.en.md']]) {
-  record(`${id} ${rel} 含安装命令与 0.2.2-rc.1`, () => {
+  record(`${id} ${rel} 含安装命令与 0.2.2-rc.3`, () => {
     const text = read(rel);
     assert(text.includes('github:xylon-y/dsh-software-company'), `${rel} missing install command`);
-    assert(text.includes('0.2.2-rc.1'), `${rel} missing target version`);
+    assert(text.includes('0.2.2-rc.3'), `${rel} missing target version`);
     assert(text.includes('node scripts/verify.mjs'), `${rel} missing verify command`);
     assert(text.includes('--dump-config'), `${rel} missing --dump-config self-check`);
     return 'install + version + verify + dump-config';
@@ -569,6 +570,47 @@ record('i8 delegation group 均含 isolate.workflowEngine', () => {
     assert(block.includes('              workflowEngine: true'), `delegation at line ${start + 1}: isolate.workflowEngine missing`);
   }
   return '5/5 delegation groups isolated';
+});
+
+record('j1 仅 lead 挂 tool-ask-user，成员 0 个', () => {
+  const text = read('cordis.patch.yml');
+  const blocks = splitPresets(text);
+  const askRe = /name:\s*'@deepseek-ai\/dsh-tool-ask-user'/g;
+  const total = (text.match(askRe) || []).length;
+  assert(total === 1, `expected exactly 1 tool-ask-user in the patch, found ${total}`);
+  for (const preset of PRESETS) {
+    const chunk = blocks.get(preset.rowId);
+    assert(chunk, `missing preset block: ${preset.rowId}`);
+    const count = (chunk.match(askRe) || []).length;
+    if (preset.lead) {
+      assert(count === 1, `lead must declare exactly 1 tool-ask-user, found ${count}`);
+      assert(/^ {10}- id: tool-ask-user$/m.test(chunk), 'lead: tool-ask-user row id missing');
+      assert(/^ {10}- id: tool-present$/m.test(chunk), 'lead: tool-present row id missing');
+    } else {
+      assert(count === 0, `${preset.rowId}: member preset must NOT declare tool-ask-user`);
+      assert(!/tool-ask-user/.test(chunk), `${preset.rowId}: member preset must not mention tool-ask-user`);
+    }
+  }
+  return 'lead=1, members=0';
+});
+
+record('j2 5 个 tool-subagent-control 均显式声明 interrupt（lead true / 成员 false）', () => {
+  const text = read('cordis.patch.yml');
+  const blocks = splitPresets(text);
+  const controlRe = /- id: tool-subagent-control\n\s+name: '@deepseek-ai\/dsh-tool-subagent-control'\n\s+config:\n\s+interrupt: (true|false)/g;
+  const all = [...text.matchAll(controlRe)];
+  assert(all.length === 5, `expected 5 explicit interrupt declarations, found ${all.length}`);
+  for (const preset of PRESETS) {
+    const chunk = blocks.get(preset.rowId);
+    assert(chunk, `missing preset block: ${preset.rowId}`);
+    const matches = [...chunk.matchAll(controlRe)];
+    assert(matches.length === 1, `${preset.rowId}: tool-subagent-control must declare interrupt exactly once, found ${matches.length}`);
+    const expected = preset.lead ? 'true' : 'false';
+    assert(matches[0][1] === expected, `${preset.rowId}: interrupt must be ${expected}, found ${matches[0][1]}`);
+    const declared = (chunk.match(/interrupt:\s*(true|false)/g) || []).length;
+    assert(declared === 1, `${preset.rowId}: expected exactly 1 interrupt key, found ${declared}`);
+  }
+  return 'lead=true, members=false (5/5 explicit)';
 });
 
 // ---------------------------------------------------------------------------
