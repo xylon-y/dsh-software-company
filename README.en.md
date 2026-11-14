@@ -2,7 +2,7 @@
 
 > English version (this file). 中文文档：[README.md]
 
-A **pure-configuration bundle** that adapts the WorkBuddy `software-company` expert team (1 lead + 4 members) into installable **DeepSeek Harness (DSH) 0.2.2-rc.1** agent presets. After installation the host gains 5 Agent Presets: one delivery director (the lead) and four specialists; the lead orchestrates delivery through four named delegation tools following a fixed SOP.
+A **pure-configuration bundle** that adapts the WorkBuddy `software-company` expert team (1 lead + 4 members) into installable **DeepSeek Harness (DSH) 0.2.2-rc.3** agent presets. After installation the host gains 5 Agent Presets: one delivery director (the lead) and four specialists; the lead orchestrates delivery through four named delegation tools following a fixed SOP.
 
 This package has **zero JS entry points**: no runtime code, no `dependencies` / `peerDependencies`, no build scripts. All capabilities come from the `@deepseek-ai/dsh-*` packages already shipped with the host profile. Every persona prompt is inlined into its preset via `@deepseek-ai/dsh-persona` `prefix`, and is also provided as a readable copy under `agents/*.md` (static verification asserts they are byte-for-byte identical).
 
@@ -15,14 +15,26 @@ This package has **zero JS entry points**: no runtime code, no `dependencies` / 
 | Item | Value |
 |------|-------|
 | Target host | DeepSeek Harness (DSH) |
-| Target host version | `0.2.2-rc.1` |
-| Official tag | `dsh-v0.2.2-rc.1` |
+| Target host version | `0.2.2-rc.3` |
+| Official tag | `dsh-v0.2.2-rc.3` |
 | Node requirement | `>=24.9.0` (`engines.node`) |
-| Host gate | `engines.dsh: ">=0.2.2-rc.1"` |
-| Plugin version | `0.1.0` |
+| Host gate | `engines.dsh: ">=0.2.2-rc.3"` |
+| Plugin version | `0.2.0` |
 | Bundle type | Pure configuration (patch layer: `./cordis.patch.yml`) |
 | Supported profile | `web` (desktop / headless profiles already ship `@deepseek-ai/dsh-*`) |
 | License | MIT |
+
+---
+
+## rc.3 incremental adaptation notes
+
+This release moves from `0.1.0` / `dsh-v0.2.2-rc.1` to `0.2.0` / `dsh-v0.2.2-rc.3`:
+
+1. **Version gates realigned**: `engines.dsh` moves from `>=0.2.2-rc.1` to `>=0.2.2-rc.3`, the plugin version becomes `0.2.0`, and the target host tag is `dsh-v0.2.2-rc.3`.
+2. **Lead gains `ask_user_question`**: the lead preset mounts `@deepseek-ai/dsh-tool-ask-user` (no extra config) so ambiguous requests can be clarified with structured questions. The four member presets **deliberately do not** mount it - a member asking the user directly would break the rule that all information flows are relayed by the lead.
+3. **`tool-subagent-control` `interrupt` made explicit**: all five presets now declare `config.interrupt` explicitly - `true` for the lead (it may need to stop a drifting member) and `false` for members (with `maxDepth: 1` they have no children, so the capability is unusable; this also matches the official standard preset).
+4. **Static self-check whitelist aligned with rc.3**: `AUTHORITATIVE_PACKAGES` in `scripts/verify.mjs` now mirrors the full package set of the rc.3 official standard preset (including `tool-ask-user`, `tool-office`, `plan-mode`, `command-goal`, `tool-goal`, `workflow-ptc`, `tool-workflow`), plus new dedicated checks for the `tool-ask-user` distribution and the `interrupt` distribution.
+5. **Tool matrix stays deliberately narrow**: the whitelist is only an allow-list. This bundle still **does not** enable host-optional capabilities such as goal / plan / schedule / office - the tool surface of all five presets remains an intentionally reduced subset (`tool-schedule`, `tool-goal`, `command-goal`, `plan-mode`, `tool-office`, `workflow-ptc`, `tool-workflow` are all unused).
 
 ---
 
@@ -122,14 +134,14 @@ Confirm: all five `software-company-*` presets appear in the composed config tre
 
 ## Known limitations (stated honestly)
 
-1. **No real-host composition test**: the build environment has no DSH runtime. This bundle is validated by static self-checks plus the official `dsh-v0.2.2-rc.1` tag contract only; please re-check `dsh --dump-config` and the real delegation chain on a host. `compatibility.json` records `runtimeVerification: "not executed (no DSH host in build environment)"`.
+1. **Verified on a real host**: tested on DSH NEXT desktop (Electron, kernel `0.2.2-rc.3`): all 5 presets loaded, all four `delegate_to_*` tools on the lead preset were available, and all four members were delegated correctly and self-reported the right identity (齐活林 / 许清楚 / 高见远 / 寇豆码 / 严过关). Running `dsh --dump-config` on your own host is still recommended. `runtimeVerification` in `compatibility.json` records this result.
 2. **Pure-configuration bundle**: no custom runtime tools, UI, or JS entry points; all capabilities depend on the `@deepseek-ai/dsh-*` packages shipped by the host profile.
 3. **Token overhead**: the full SOP is injected as a persona `prefix` into the system prompt, so it is carried on every turn and increases per-turn token usage.
 4. **Message topology**: DSH `send_message` only supports direct parent/child communication, so members cannot message each other directly. This happens to satisfy the original SOP rule ("all cross-member information flows are relayed by the lead"), but it also prevents lateral member-to-member negotiation.
 5. **Do not overwrite the official `standard` preset**: this bundle only inserts new `sc-`-prefixed rows and never touches host top-level rows such as `agent-preset-registry`, `system-prompt`, `skill-filesystem`, `tool-skill`, `agent-loop`. Do not hand-edit it into a `replace`.
-6. **Tool subset fully matches the official standard**: shell tools are conditionally disabled per host platform - `@deepseek-ai/dsh-tool-bash` on win32 and `@deepseek-ai/dsh-tool-pwsh` on non-win32, exactly like the official standard preset (`disabled` is evaluated in the patch layer via a `!!js` expression). Other tool config also matches the official standard: `tool-fs` disables `applyPatch`, `tool-fs-search` disables `sampleOverCapGlobResults`, `tool-todo` enables `allowParallelInProgress`, `tool-web` enables `fetch` with `searchTimeoutMs: 60000`, and `compaction-tool-result-pruner` sets `thresholdChars: 8192` / `headChars: 4096` / `tailChars: 1024`.
+6. **Enabled tool parameters match the official standard (the tool surface is a reduced subset)**: this bundle enables only the core coding tools; host-optional capabilities such as goal / plan / schedule / office / workflow are deliberately left off (see "rc.3 incremental adaptation notes" item 5). For the tools it does enable, parameters match the official standard: shell tools are conditionally disabled per host platform - `@deepseek-ai/dsh-tool-bash` on win32 and `@deepseek-ai/dsh-tool-pwsh` on non-win32 (`disabled` is evaluated in the patch layer via a `!!js` expression); `tool-fs` disables `applyPatch`, `tool-fs-search` disables `sampleOverCapGlobResults`, `tool-todo` enables `allowParallelInProgress`, `tool-web` enables `fetch` with `searchTimeoutMs: 60000`, and `compaction-tool-result-pruner` sets `thresholdChars: 8192` / `headChars: 4096` / `tailChars: 1024`.
 7. **Prompt variable interpolation**: DSH interpolates variables inside the persona `prefix`; unregistered variables break prompt assembly. All `prefix` blocks and `agents/*.md` bodies here are guaranteed free of the template-variable opener (two consecutive left curly braces) - do not introduce one when customizing.
-8. **Node gate**: `engines.node: ">=24.9.0"` is required by DSH 0.2.2-rc.1. `scripts/verify.mjs` itself uses only Node built-ins, but please run it in an environment that satisfies the gate.
+8. **Node gate**: `engines.node: ">=24.9.0"` is required by DSH 0.2.2-rc.3. `scripts/verify.mjs` itself uses only Node built-ins, but please run it in an environment that satisfies the gate.
 
 ---
 
