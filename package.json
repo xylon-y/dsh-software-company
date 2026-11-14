@@ -1,6 +1,6 @@
 {
   "name": "dsh-software-company",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
   "description": "Pure-configuration DSH bundle that adapts the Software Company expert team (1 lead + 4 members) into DeepSeek Harness agent presets.",
   "license": "MIT",

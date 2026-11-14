@@ -19,7 +19,7 @@
 | 官方 tag | `dsh-v0.2.2-rc.3` |
 | Node 要求 | `>=24.9.0`（`engines.node`） |
 | 宿主门控 | `engines.dsh: ">=0.2.2-rc.3"` |
-| 插件版本 | `0.2.0` |
+| 插件版本 | `0.3.0` |
 | Bundle 类型 | 纯配置（patch 层：`./cordis.patch.yml`） |
 | 适用 profile | `web`（桌面端 / headless 均自带 `@deepseek-ai/dsh-*` 包） |
 | License | MIT |
@@ -34,7 +34,21 @@
 2. **主理人新增 `ask_user_question`**：lead preset 挂上 `@deepseek-ai/dsh-tool-ask-user`（无额外 config），需求不明确时用 `ask_user_question` 做结构化澄清。4 个成员 preset **刻意不挂**该工具 —— 成员直接问用户会破坏「所有信息流经主理人中转」的铁律。
 3. **`tool-subagent-control` 的 `interrupt` 显式化**：5 个 preset 全部显式声明 `config.interrupt` —— 主理人为 `true`（可中止跑偏成员），成员为 `false`（成员 `maxDepth: 1` 没有下级，该能力本不可用，与官方 standard 一致）。
 4. **静态自检白名单对齐 rc.3**：`scripts/verify.mjs` 的 `AUTHORITATIVE_PACKAGES` 更新为 rc.3 官方 standard preset 的完整包集合（含 `tool-ask-user`、`tool-office`、`plan-mode`、`command-goal`、`tool-goal`、`workflow-ptc`、`tool-workflow` 等），并新增 `tool-ask-user` 分布与 `interrupt` 分布的专项检查。
-5. **工具矩阵保持精简**：白名单只是「允许集合」，本 bundle 实际**未引入** goal / plan / schedule / office 等宿主可选能力，5 个 preset 的工具面仍是刻意收窄的子集（`tool-schedule`、`tool-goal`、`command-goal`、`plan-mode`、`tool-office`、`workflow-ptc`、`tool-workflow` 均未启用）。
+5. **工具矩阵保持精简**：白名单只是「允许集合」，`0.2.0` 时本 bundle **未引入**任何 goal / plan / schedule / office 宿主可选能力。`0.3.0` 按已批准矩阵补挂了 `command-goal` / `tool-goal`（仅主理人）与 `tool-office`（仅产品经理与工程师），编排类能力依然全部关闭（见下文「能力启用矩阵（0.3.0）」）。
+
+---
+
+## 能力启用矩阵（0.3.0）
+
+| preset | 新增包行 | config | 说明 |
+|--------|---------|--------|------|
+| `software-company-lead`（`sc-preset-lead`） | `@deepseek-ai/dsh-command-goal`（`command-goal`）+ `@deepseek-ai/dsh-tool-goal`（`tool-goal`） | 均无 config（字段全部有默认值） | 主理人管理跨阶段交付目标 |
+| `software-company-product-manager` | `@deepseek-ai/dsh-tool-office`（`tool-office`） | 无 config（`activationSkills` 走默认） | 可产出 Office 文档交付物 |
+| `software-company-engineer` | `@deepseek-ai/dsh-tool-office`（`tool-office`） | 同上 | 同上 |
+| `software-company-architect` | 不挂任何新包 | — | 零扩展 |
+| `software-company-qa-engineer` | 不挂任何新包 | — | 验收报告默认走对话内交付，不默认开 office |
+
+设计原则：**编排类能力不开放给成员，产物类能力按角色需要挂载** —— `plan-mode`、`tool-schedule`、`workflow-ptc`、`tool-workflow` 刻意保持零启用，成员依旧不得委派下级、不得绕过主理人直达用户。
 
 ---
 
@@ -139,7 +153,7 @@ dsh --dump-config
 3. **token 开销**：完整 SOP 作为 persona `prefix` 注入系统提示，每轮对话都会携带，会增加每轮 token 消耗。
 4. **消息拓扑**：DSH 的 `send_message` 只支持直接父/子通信，成员之间不能互相直连 —— 这恰好满足原 SOP「所有跨成员信息流经主理人中转」的铁律，但也意味着无法做成员间横向协商。
 5. **不要覆盖官方 `standard` preset**：本 bundle 只 `insert` 全新的 `sc-` 前缀行，不改动 `agent-preset-registry` / `system-prompt` / `skill-filesystem` / `tool-skill` / `agent-loop` 等宿主顶层行；请勿手工把它改成 `replace`。
-6. **已启用工具的参数与官方 standard 对齐（但工具面是收窄子集）**：本包只启用核心编码工具；goal / plan / schedule / office / workflow 等宿主可选能力刻意不启用（见上文「rc.3 增量适配说明」第 5 条）。对已启用的工具，参数与官方 standard 保持一致：shell 工具按宿主平台条件禁用 —— `@deepseek-ai/dsh-tool-bash` 在 win32 禁用、`@deepseek-ai/dsh-tool-pwsh` 在非 win32 禁用（`disabled` 使用 `!!js` 表达式在 patch 层求值）；`tool-fs` 关闭 `applyPatch`、`tool-fs-search` 关闭 `sampleOverCapGlobResults`、`tool-todo` 开启 `allowParallelInProgress`、`tool-web` 开启 `fetch` 并设 `searchTimeoutMs: 60000`、`compaction-tool-result-pruner` 设 `thresholdChars: 8192` / `headChars: 4096` / `tailChars: 1024`。
+6. **已启用工具的参数与官方 standard 对齐（工具面是刻意收窄的子集）**：本包启用核心编码工具；`plan` / `schedule` / `workflow` 刻意未启用，`goal` 仅主理人、`office` 仅产品经理与工程师（见上文「能力启用矩阵（0.3.0）」）。对已启用的工具，参数与官方 standard 保持一致：shell 工具按宿主平台条件禁用 —— `@deepseek-ai/dsh-tool-bash` 在 win32 禁用、`@deepseek-ai/dsh-tool-pwsh` 在非 win32 禁用（`disabled` 使用 `!!js` 表达式在 patch 层求值）；`tool-fs` 关闭 `applyPatch`、`tool-fs-search` 关闭 `sampleOverCapGlobResults`、`tool-todo` 开启 `allowParallelInProgress`、`tool-web` 开启 `fetch` 并设 `searchTimeoutMs: 60000`、`compaction-tool-result-pruner` 设 `thresholdChars: 8192` / `headChars: 4096` / `tailChars: 1024`。
 7. **prompt 变量插值**：DSH 会对 persona `prefix` 做变量插值，未注册变量会导致 prompt 组装失败；本包所有 `prefix` 与 `agents/*.md` 正文均已确保不含模板变量起始符（两个连续的左花括号），自定义修改时请勿引入。
 8. **Node 门控**：`engines.node: ">=24.9.0"` 是 DSH 0.2.2-rc.3 的要求；`scripts/verify.mjs` 本身只用 Node 原生 API，但请在满足门控的环境运行。
 

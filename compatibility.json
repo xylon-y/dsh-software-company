@@ -1,6 +1,6 @@
 {
   "plugin": "dsh-software-company",
-  "pluginVersion": "0.2.0",
+  "pluginVersion": "0.3.0",
   "bundleType": "pure-configuration",
   "patch": "./cordis.patch.yml",
   "targetHost": "DeepSeek Harness (DSH)",
@@ -17,17 +17,19 @@
   "configDumpSelfCheck": "dsh --dump-config",
   "runtimeVerification": "verified on DSH NEXT desktop (kernel 0.2.2-rc.3): 5 presets loaded, lead preset spawned all 4 delegate_to_* members successfully",
   "changeSummaryFrom": {
-    "from": "0.1.0 / dsh-v0.2.2-rc.1",
-    "to": "0.2.0 / dsh-v0.2.2-rc.3",
+    "from": "0.2.0 / dsh-v0.2.2-rc.3",
+    "to": "0.3.0 / dsh-v0.2.2-rc.3",
     "changes": [
-      "Version gate: engines.dsh >=0.2.2-rc.3, plugin version 0.2.0",
-      "Lead preset gains @deepseek-ai/dsh-tool-ask-user (ask_user_question) for structured clarification",
-      "tool-subagent-control now declares config.interrupt explicitly (lead: true, members: false)",
-      "Static self-check whitelist aligned with the rc.3 official standard preset package set"
+      "Lead preset gains @deepseek-ai/dsh-command-goal + @deepseek-ai/dsh-tool-goal (both without config) to manage cross-stage delivery goals",
+      "Product-manager + engineer presets gain @deepseek-ai/dsh-tool-office (without config, default activationSkills) for Office document deliverables",
+      "Architect + QA presets: zero capability extension (QA acceptance reports stay in-conversation)",
+      "plan-mode / tool-schedule / workflow-ptc / tool-workflow remain deliberately unenabled",
+      "Lead persona prefix gained a short capability-boundary section, mirrored verbatim in agents/software-team-lead.md"
     ]
   },
   "notes": [
-    "No goal/plan/schedule/office host-optional capabilities were introduced; the tool matrix remains a deliberately reduced subset.",
-    "subagent-interrupt-default since rc.1: the official standard preset sets tool-subagent-control to interrupt: false, while the plugin default stays true."
+    "plan-mode / tool-schedule / workflow-ptc / tool-workflow were never introduced; the tool matrix remains a deliberately reduced subset (goal is lead-only, office is PM+engineer-only since 0.3.0).",
+    "subagent-interrupt-default since rc.1: the official standard preset sets tool-subagent-control to interrupt: false, while the plugin default stays true.",
+    "0.3.0 capability matrix (lead-approved): command-goal + tool-goal on the software-company-lead preset only, tool-office on the product-manager and engineer presets only; plan/schedule/workflow stay unenabled; architect and QA get zero extension (QA acceptance reports are delivered in-conversation). Enforced by scripts/verify.mjs check k1."
   ]
 }

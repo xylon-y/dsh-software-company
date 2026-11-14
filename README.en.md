@@ -19,7 +19,7 @@ This package has **zero JS entry points**: no runtime code, no `dependencies` / 
 | Official tag | `dsh-v0.2.2-rc.3` |
 | Node requirement | `>=24.9.0` (`engines.node`) |
 | Host gate | `engines.dsh: ">=0.2.2-rc.3"` |
-| Plugin version | `0.2.0` |
+| Plugin version | `0.3.0` |
 | Bundle type | Pure configuration (patch layer: `./cordis.patch.yml`) |
 | Supported profile | `web` (desktop / headless profiles already ship `@deepseek-ai/dsh-*`) |
 | License | MIT |
@@ -34,7 +34,21 @@ This release moves from `0.1.0` / `dsh-v0.2.2-rc.1` to `0.2.0` / `dsh-v0.2.2-rc.
 2. **Lead gains `ask_user_question`**: the lead preset mounts `@deepseek-ai/dsh-tool-ask-user` (no extra config) so ambiguous requests can be clarified with structured questions. The four member presets **deliberately do not** mount it - a member asking the user directly would break the rule that all information flows are relayed by the lead.
 3. **`tool-subagent-control` `interrupt` made explicit**: all five presets now declare `config.interrupt` explicitly - `true` for the lead (it may need to stop a drifting member) and `false` for members (with `maxDepth: 1` they have no children, so the capability is unusable; this also matches the official standard preset).
 4. **Static self-check whitelist aligned with rc.3**: `AUTHORITATIVE_PACKAGES` in `scripts/verify.mjs` now mirrors the full package set of the rc.3 official standard preset (including `tool-ask-user`, `tool-office`, `plan-mode`, `command-goal`, `tool-goal`, `workflow-ptc`, `tool-workflow`), plus new dedicated checks for the `tool-ask-user` distribution and the `interrupt` distribution.
-5. **Tool matrix stays deliberately narrow**: the whitelist is only an allow-list. This bundle still **does not** enable host-optional capabilities such as goal / plan / schedule / office - the tool surface of all five presets remains an intentionally reduced subset (`tool-schedule`, `tool-goal`, `command-goal`, `plan-mode`, `tool-office`, `workflow-ptc`, `tool-workflow` are all unused).
+5. **Tool matrix stays deliberately narrow**: the whitelist is only an allow-list. At `0.2.0` the bundle introduced **no** host-optional goal / plan / schedule / office capability. `0.3.0` mounts `command-goal` / `tool-goal` (lead only) and `tool-office` (product manager + engineer only) per the approved matrix; every orchestration capability stays off (see "Capability enablement matrix (0.3.0)" below).
+
+---
+
+## Capability enablement matrix (0.3.0)
+
+| Preset | Added plugin rows | Config | Purpose |
+|--------|-------------------|--------|---------|
+| `software-company-lead` (`sc-preset-lead`) | `@deepseek-ai/dsh-command-goal` (`command-goal`) + `@deepseek-ai/dsh-tool-goal` (`tool-goal`) | both without config (every field has a default) | the lead tracks cross-stage delivery goals |
+| `software-company-product-manager` | `@deepseek-ai/dsh-tool-office` (`tool-office`) | without config (`activationSkills` defaults) | Office document deliverables |
+| `software-company-engineer` | `@deepseek-ai/dsh-tool-office` (`tool-office`) | same as above | same as above |
+| `software-company-architect` | no new package | - | zero extension |
+| `software-company-qa-engineer` | no new package | - | acceptance reports stay in-conversation; office is not enabled by default |
+
+Design principle: **orchestration capabilities are never opened to members, artifact capabilities are mounted per role** - `plan-mode`, `tool-schedule`, `workflow-ptc` and `tool-workflow` stay at zero occurrences, members still cannot spawn subagents or reach the user behind the lead.
 
 ---
 
@@ -139,7 +153,7 @@ Confirm: all five `software-company-*` presets appear in the composed config tre
 3. **Token overhead**: the full SOP is injected as a persona `prefix` into the system prompt, so it is carried on every turn and increases per-turn token usage.
 4. **Message topology**: DSH `send_message` only supports direct parent/child communication, so members cannot message each other directly. This happens to satisfy the original SOP rule ("all cross-member information flows are relayed by the lead"), but it also prevents lateral member-to-member negotiation.
 5. **Do not overwrite the official `standard` preset**: this bundle only inserts new `sc-`-prefixed rows and never touches host top-level rows such as `agent-preset-registry`, `system-prompt`, `skill-filesystem`, `tool-skill`, `agent-loop`. Do not hand-edit it into a `replace`.
-6. **Enabled tool parameters match the official standard (the tool surface is a reduced subset)**: this bundle enables only the core coding tools; host-optional capabilities such as goal / plan / schedule / office / workflow are deliberately left off (see "rc.3 incremental adaptation notes" item 5). For the tools it does enable, parameters match the official standard: shell tools are conditionally disabled per host platform - `@deepseek-ai/dsh-tool-bash` on win32 and `@deepseek-ai/dsh-tool-pwsh` on non-win32 (`disabled` is evaluated in the patch layer via a `!!js` expression); `tool-fs` disables `applyPatch`, `tool-fs-search` disables `sampleOverCapGlobResults`, `tool-todo` enables `allowParallelInProgress`, `tool-web` enables `fetch` with `searchTimeoutMs: 60000`, and `compaction-tool-result-pruner` sets `thresholdChars: 8192` / `headChars: 4096` / `tailChars: 1024`.
+6. **Enabled tool parameters match the official standard (the tool surface is an intentionally narrow subset)**: this bundle enables the core coding tools; `plan` / `schedule` / `workflow` are deliberately not enabled, `goal` is lead-only and `office` is product-manager + engineer only (see "Capability enablement matrix (0.3.0)" above). For the tools it does enable, parameters match the official standard: shell tools are conditionally disabled per host platform - `@deepseek-ai/dsh-tool-bash` on win32 and `@deepseek-ai/dsh-tool-pwsh` on non-win32 (`disabled` is evaluated in the patch layer via a `!!js` expression); `tool-fs` disables `applyPatch`, `tool-fs-search` disables `sampleOverCapGlobResults`, `tool-todo` enables `allowParallelInProgress`, `tool-web` enables `fetch` with `searchTimeoutMs: 60000`, and `compaction-tool-result-pruner` sets `thresholdChars: 8192` / `headChars: 4096` / `tailChars: 1024`.
 7. **Prompt variable interpolation**: DSH interpolates variables inside the persona `prefix`; unregistered variables break prompt assembly. All `prefix` blocks and `agents/*.md` bodies here are guaranteed free of the template-variable opener (two consecutive left curly braces) - do not introduce one when customizing.
 8. **Node gate**: `engines.node: ">=24.9.0"` is required by DSH 0.2.2-rc.3. `scripts/verify.mjs` itself uses only Node built-ins, but please run it in an environment that satisfies the gate.
 

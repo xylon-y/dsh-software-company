@@ -193,7 +193,7 @@ record('a1 package.json 可解析且必填字段齐全', () => {
     assert(Object.prototype.hasOwnProperty.call(pkg, key), `missing field: ${key}`);
   }
   assert(pkg.name === 'dsh-software-company', `name mismatch: ${pkg.name}`);
-  assert(pkg.version === '0.2.0', `version mismatch: ${pkg.version}`);
+  assert(pkg.version === '0.3.0', `version mismatch: ${pkg.version}`);
   assert(pkg.type === 'module', 'type must be module');
   assert(pkg.license === 'MIT', 'license must be MIT');
   assert(String(pkg.repository.url || '').includes('xylon-y/dsh-software-company'), 'repository url mismatch');
@@ -611,6 +611,63 @@ record('j2 5 个 tool-subagent-control 均显式声明 interrupt（lead true / �
     assert(declared === 1, `${preset.rowId}: expected exactly 1 interrupt key, found ${declared}`);
   }
   return 'lead=true, members=false (5/5 explicit)';
+});
+
+// ---------------------------------------------------------------------------
+// (k) approved capability-enablement matrix (0.3.0)
+// ---------------------------------------------------------------------------
+const OFFICE_ROWS = {
+  'software-company-lead': 0,
+  'software-company-product-manager': 1,
+  'software-company-architect': 0,
+  'software-company-engineer': 1,
+  'software-company-qa-engineer': 0,
+};
+
+record('k1 能力矩阵：goal 仅 lead、office 仅 PM+engineer、编排类零启用', () => {
+  const text = read('cordis.patch.yml');
+  const blocks = splitPresets(text);
+  const rowCount = (scope, id) => (scope.match(new RegExp(`^ {10}- id: ${id}$`, 'gm')) || []).length;
+  const nameCount = (scope, id) => (scope.match(new RegExp(`name: '@deepseek-ai/dsh-${id}'`, 'g')) || []).length;
+
+  for (const id of ['command-goal', 'tool-goal']) {
+    const rows = rowCount(text, id);
+    const names = nameCount(text, id);
+    assert(rows === 1, `${id}: expected exactly 1 row id in the patch, found ${rows}`);
+    assert(names === 1, `${id}: expected exactly 1 package name in the patch, found ${names}`);
+    for (const preset of PRESETS) {
+      const chunk = blocks.get(preset.rowId);
+      assert(chunk, `missing preset block: ${preset.rowId}`);
+      const found = rowCount(chunk, id);
+      if (preset.lead) {
+        assert(found === 1, `lead must declare exactly 1 ${id}, found ${found}`);
+      } else {
+        assert(found === 0, `${preset.rowId}: member preset must NOT declare ${id}`);
+        assert(!chunk.includes(id), `${preset.rowId}: preset block must not mention ${id}`);
+      }
+    }
+  }
+
+  const officeRows = rowCount(text, 'tool-office');
+  const officeNames = nameCount(text, 'tool-office');
+  assert(officeRows === 2, `tool-office: expected exactly 2 rows globally, found ${officeRows}`);
+  assert(officeNames === 2, `tool-office: expected exactly 2 package names globally, found ${officeNames}`);
+  for (const preset of PRESETS) {
+    const chunk = blocks.get(preset.rowId);
+    assert(chunk, `missing preset block: ${preset.rowId}`);
+    const expected = OFFICE_ROWS[preset.presetId];
+    const found = rowCount(chunk, 'tool-office');
+    assert(found === expected, `${preset.rowId}: expected ${expected} tool-office rows, found ${found}`);
+    if (expected === 0) {
+      assert(!chunk.includes('tool-office'), `${preset.rowId}: preset block must not mention tool-office`);
+    }
+  }
+
+  for (const forbidden of ['plan-mode', 'tool-schedule', 'workflow-ptc', 'tool-workflow']) {
+    const found = (text.match(new RegExp(forbidden, 'g')) || []).length;
+    assert(found === 0, `${forbidden} must not appear in cordis.patch.yml, found ${found}`);
+  }
+  return 'goal=lead only; office=PM+engineer only; plan/schedule/workflow=0 occurrences';
 });
 
 // ---------------------------------------------------------------------------
