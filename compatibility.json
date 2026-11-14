@@ -1,19 +1,33 @@
 {
   "plugin": "dsh-software-company",
-  "pluginVersion": "0.1.0",
+  "pluginVersion": "0.2.0",
   "bundleType": "pure-configuration",
   "patch": "./cordis.patch.yml",
   "targetHost": "DeepSeek Harness (DSH)",
-  "targetHostVersion": "0.2.2-rc.1",
-  "targetHostTag": "dsh-v0.2.2-rc.1",
+  "targetHostVersion": "0.2.2-rc.3",
+  "targetHostTag": "dsh-v0.2.2-rc.3",
   "engines": {
     "node": ">=24.9.0",
-    "dsh": ">=0.2.2-rc.1"
+    "dsh": ">=0.2.2-rc.3"
   },
   "staticVerification": {
     "command": "node scripts/verify.mjs",
     "description": "Zero-dependency static self-check of package.json, cordis.patch.yml, persona prefixes, agent prompts, the optional skill, and both READMEs."
   },
   "configDumpSelfCheck": "dsh --dump-config",
-  "runtimeVerification": "not executed (no DSH host in build environment)"
+  "runtimeVerification": "verified on DSH NEXT desktop (kernel 0.2.2-rc.3): 5 presets loaded, lead preset spawned all 4 delegate_to_* members successfully",
+  "changeSummaryFrom": {
+    "from": "0.1.0 / dsh-v0.2.2-rc.1",
+    "to": "0.2.0 / dsh-v0.2.2-rc.3",
+    "changes": [
+      "Version gate: engines.dsh >=0.2.2-rc.3, plugin version 0.2.0",
+      "Lead preset gains @deepseek-ai/dsh-tool-ask-user (ask_user_question) for structured clarification",
+      "tool-subagent-control now declares config.interrupt explicitly (lead: true, members: false)",
+      "Static self-check whitelist aligned with the rc.3 official standard preset package set"
+    ]
+  },
+  "notes": [
+    "No goal/plan/schedule/office host-optional capabilities were introduced; the tool matrix remains a deliberately reduced subset.",
+    "subagent-interrupt-default since rc.1: the official standard preset sets tool-subagent-control to interrupt: false, while the plugin default stays true."
+  ]
 }
